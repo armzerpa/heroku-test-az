@@ -89,7 +89,7 @@ JQzfE6v1Rwgm+fLfQfJrIbcN6ZwFh5CAjFmtD6XI7ho+p7GO9x9gLoHYSg6m8vyt
 oQIDAQAB
 -----END PUBLIC KEY-----`
 
-func EncryptData(data string) string {
+func EncryptStringData(data string) string {
 	jws := jws(data)
 	jwe := jwe(jws)
 	return jwe

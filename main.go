@@ -12,10 +12,15 @@ import (
 func main() {
 	r := gin.Default()
 
-	api := r.Group("/api")
-	api.GET("/ping", ping)
-	api.GET("/test", encryptTest)
-	api.POST("encrypt", encryptPayload)
+	authorized := r.Group("/api", gin.BasicAuth(gin.Accounts{
+		"user1": "testdigibee",
+		"user2": "testaz",
+	}))
+
+	//api := r.Group("/api")
+	authorized.GET("/ping", ping)
+	authorized.GET("/test", encryptString)
+	authorized.POST("encrypt", encryptPayload)
 
 	r.Use(static.Serve("/", static.LocalFile("./views", true)))
 	r.Run()
@@ -32,8 +37,9 @@ func encryptPayload(c *gin.Context) {
 	c.String(http.StatusOK, response)
 }
 
-func encryptTest(c *gin.Context) {
-	response := jwt.EncryptData("hola")
+func encryptString(c *gin.Context) {
+	key := c.Query("key")
+	response := jwt.EncryptStringData(key)
 	c.String(200, response)
 }
 
