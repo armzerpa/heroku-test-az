@@ -3,10 +3,19 @@ package jwt
 import (
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 
 	jose "github.com/go-jose/go-jose/v3"
 )
+
+type Serialize struct {
+	Protected    string `json:"protected" binding:"required"`
+	EncryptedKey string `json:"encrypted_key" binding:"required"`
+	Iv           string `json:"iv" binding:"required"`
+	Ciphertext   string `json:"ciphertext" binding:"required"`
+	Tag          string `json:"tag" binding:"required"`
+}
 
 const rootPEM = `
 -----BEGIN CERTIFICATE-----
@@ -196,4 +205,32 @@ func getCertificate(data string) *x509.Certificate {
 	}
 
 	return cert
+}
+
+func DecryptRawData(data Serialize) string {
+	dataString, err := json.Marshal(data)
+	if err != nil {
+		panic(err)
+	}
+	object, err := jose.ParseEncrypted(string(dataString))
+	if err != nil {
+		panic(err)
+	}
+	//JWE decode
+	var privateKey = getPrivateKey(privateKEY)
+	decrypted, err := object.Decrypt(privateKey)
+	if err != nil {
+		panic(err)
+	}
+	objectSign, err := jose.ParseSigned(string(decrypted))
+	if err != nil {
+		panic(err)
+	}
+	//JWS verify
+	var publicKey = getPublicKey(publicKEY)
+	output, err := objectSign.Verify(publicKey)
+	if err != nil {
+		panic(err)
+	}
+	return string(output)
 }
