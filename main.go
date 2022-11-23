@@ -1,18 +1,24 @@
 package main
 
 import (
-	"io"
-	"log"
 	"net/http"
 	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	port := os.Getenv("PORT")
-	helloHandler := func(w http.ResponseWriter, req *http.Request) {
-		io.WriteString(w, "Hello, world - this is a test from Armando Zerpa!\n")
+	if port == "" {
+		port = "8080"
 	}
-	http.HandleFunc("/", helloHandler)
-	log.Println("Listing for" + port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+
+	router := gin.Default()
+	router.GET("/ping", ping)
+
+	router.Run("localhost:" + port)
+}
+
+func ping(c *gin.Context) {
+	c.IndentedJSON(http.StatusOK, "pong")
 }
