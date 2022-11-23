@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -8,6 +9,14 @@ import (
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
 )
+
+type ResponseSerialize struct {
+	Protected    string `json:"protected"`
+	EncryptedKey string `json:"encrypted_key"`
+	Iv           string `json:"iv"`
+	Ciphertext   string `json:"ciphertext"`
+	Tag          string `json:"tag"`
+}
 
 func main() {
 	r := gin.Default()
@@ -32,15 +41,26 @@ func encryptPayload(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, "Invalid body")
 		return
 	}
+	responseString := jwt.EncryptRawData(jsonData)
 
-	response := jwt.EncryptRawData(jsonData)
-	c.String(http.StatusOK, response)
+	data := ResponseSerialize{}
+	json.Unmarshal([]byte(responseString), &data)
+
+	c.IndentedJSON(http.StatusOK, data)
 }
 
 func encryptString(c *gin.Context) {
-	key := c.Query("key")
-	response := jwt.EncryptStringData(key)
-	c.String(200, response)
+	key := c.Query("value")
+	if key == "" {
+		c.IndentedJSON(http.StatusBadRequest, "value key invalid")
+		return
+	}
+	responseString := jwt.EncryptStringData(key)
+
+	data := ResponseSerialize{}
+	json.Unmarshal([]byte(responseString), &data)
+
+	c.IndentedJSON(http.StatusOK, data)
 }
 
 func ping(c *gin.Context) {
